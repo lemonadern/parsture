@@ -1,0 +1,12 @@
+[package]
+name = "parsture"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tree-sitter = "0.25.10"
+tree-sitter-bison = { git = "https://github.com/lemonadern/tree-sitter-bison" }
+clap = { version = "4.5.52", features = ["derive"] }
+
+# [patch."https://github.com/lemonadern/tree-sitter-bison"]
+# tree-sitter-bison = { path = "../tree-sitter-bison" }
