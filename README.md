@@ -6,16 +6,16 @@ A CLI tool for exploring Bison/Yacc grammar files and understanding rule structu
 
 parsture provides the following features:
 
-- **Rule name search**: Search for rule names using substring matching or regular expressions
+- **Rule search**: Search for rules by matching patterns in rule names (left-hand side) and/or rule bodies (right-hand side) using substring matching or regular expressions
 - **Rule structure display**: List right-hand side alternatives for a specified rule
 
 ## Usage
 
 parsture uses a subcommand-based interface.
 
-### Search for rule names (`search`)
+### Search for rules (`search`)
 
-Search for rule names. By default, substring matching is used. Use the `--regex` option for regular expression matching.
+Search for rules by matching patterns in rule names and/or rule bodies. By default, searches both left-hand side (rule names) and right-hand side (rule bodies). Use substring matching by default, or the `--regex` option for regular expression matching.
 
 ```bash
 parsture search [OPTIONS] <PATTERN>
@@ -25,7 +25,11 @@ parsture search [OPTIONS] <PATTERN>
 
 - `-f, --file <FILE>`: Path to the grammar file to parse (omit to read from stdin)
 - `-r, --regex`: Treat pattern as a regular expression
+- `--lhs`: Search in left-hand side (rule names) only
+- `--rhs`: Search in right-hand side (rule bodies) only
 - `-h, --help`: Print help
+
+**Note**: By default (when neither `--lhs` nor `--rhs` is specified), both left-hand side and right-hand side are searched.
 
 #### Arguments
 
@@ -34,8 +38,14 @@ parsture search [OPTIONS] <PATTERN>
 #### Examples
 
 ```bash
-# Substring match (default)
+# Substring match (default: searches both left-hand side and right-hand side)
 parsture search -f gram.y expr
+
+# Search in left-hand side (rule names) only
+parsture search --lhs -f gram.y expr
+
+# Search in right-hand side (rule bodies) only
+parsture search --rhs -f gram.y expr
 
 # Regular expression search
 parsture search --regex -f gram.y "^expr"
@@ -46,7 +56,7 @@ cat gram.y | parsture search expr
 
 #### Output
 
-Prints matched rule names one per line, in the order they appear in the file (top to bottom).
+Prints matched rule names one per line, in the order they appear in the file (top to bottom). A rule is included if the pattern matches its name (when searching left-hand side) or appears in its body (when searching right-hand side).
 
 ```
 expression

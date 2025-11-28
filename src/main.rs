@@ -3,7 +3,7 @@ mod ops;
 
 use clap::Parser;
 use cli::{Args, Command};
-use ops::{extract, search_rules};
+use ops::{SearchTarget, extract, search_rules};
 use std::fs::read_to_string;
 use std::io::{self, Read};
 
@@ -15,13 +15,24 @@ fn main() {
             file,
             pattern,
             regex,
+            lhs,
+            rhs,
         } => {
             let src = match read_source(file.as_ref()) {
                 Ok(src) => src,
                 Err(err) => fail(err),
             };
 
-            let rule_names = search_rules(&src, &pattern, regex).unwrap_or_else(fail);
+            let search_target = if lhs {
+                SearchTarget::Lhs
+            } else if rhs {
+                SearchTarget::Rhs
+            } else {
+                SearchTarget::Both
+            };
+
+            let rule_names =
+                search_rules(&src, &pattern, regex, search_target).unwrap_or_else(fail);
 
             for name in rule_names {
                 println!("{}", name);
