@@ -1,12 +1,37 @@
+use regex::Regex;
 use tree_sitter::Node;
 
+/// Search for rule names (returns rule names only, no structure)
+pub fn search_rules(src: &str, pattern: &str, use_regex: bool) -> Result<Vec<String>, String> {
+    let tree = parse(src)?;
+    if tree.root_node().has_error() {
+        eprintln!("note: CST includes errors; result may be incomplete");
+    }
+
+    let rule_names = if use_regex {
+        let regex = Regex::new(pattern).map_err(|e| format!("invalid regular expression: {e}"))?;
+        find_rule_names_by_regex(tree.root_node(), src, &regex)
+    } else {
+        find_rule_names_by_substring(tree.root_node(), src, pattern)
+    };
+
+    if rule_names.is_empty() {
+        return Err(format!(
+            "grammar rule matching `{pattern}` not found in CST"
+        ));
+    }
+
+    Ok(rule_names)
+}
+
+/// Extract rule structure (exact match only)
 pub fn extract(src: &str, rule_name: &str, include_prec: bool) -> Result<Vec<Vec<String>>, String> {
     let tree = parse(src)?;
     if tree.root_node().has_error() {
         eprintln!("note: CST includes errors; result may be incomplete");
     }
 
-    let Some(rule_node) = find_rule(tree.root_node(), src, rule_name) else {
+    let Some(rule_node) = find_rule_by_exact_match(tree.root_node(), src, rule_name) else {
         return Err(format!("grammar rule `{rule_name}` not found in CST"));
     };
 
@@ -24,7 +49,7 @@ fn parse(src: &str) -> Result<tree_sitter::Tree, String> {
         .ok_or_else(|| "tree-sitter failed to parse the file".to_string())
 }
 
-fn find_rule<'a>(root: Node<'a>, src: &str, expected: &str) -> Option<Node<'a>> {
+fn find_rule_by_exact_match<'a>(root: Node<'a>, src: &str, expected: &str) -> Option<Node<'a>> {
     if root.kind() == "grammar_rule"
         && let Some(name) = rule_name(root, src)
         && name == expected
@@ -34,12 +59,48 @@ fn find_rule<'a>(root: Node<'a>, src: &str, expected: &str) -> Option<Node<'a>> 
 
     let mut cursor = root.walk();
     for child in root.children(&mut cursor) {
-        if let Some(found) = find_rule(child, src, expected) {
+        if let Some(found) = find_rule_by_exact_match(child, src, expected) {
             return Some(found);
         }
     }
 
     None
+}
+
+fn find_rule_names_by_substring<'a>(root: Node<'a>, src: &str, pattern: &str) -> Vec<String> {
+    let mut results = Vec::new();
+
+    if root.kind() == "grammar_rule"
+        && let Some(name) = rule_name(root, src)
+        && name.contains(pattern)
+    {
+        results.push(name);
+    }
+
+    let mut cursor = root.walk();
+    for child in root.children(&mut cursor) {
+        results.extend(find_rule_names_by_substring(child, src, pattern));
+    }
+
+    results
+}
+
+fn find_rule_names_by_regex<'a>(root: Node<'a>, src: &str, regex: &Regex) -> Vec<String> {
+    let mut results = Vec::new();
+
+    if root.kind() == "grammar_rule"
+        && let Some(name) = rule_name(root, src)
+        && regex.is_match(&name)
+    {
+        results.push(name);
+    }
+
+    let mut cursor = root.walk();
+    for child in root.children(&mut cursor) {
+        results.extend(find_rule_names_by_regex(child, src, regex));
+    }
+
+    results
 }
 
 fn rule_name(node: Node, src: &str) -> Option<String> {

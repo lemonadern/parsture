@@ -180,6 +180,7 @@ name = "parsture"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "regex",
  "tree-sitter",
  "tree-sitter-bison",
 ]
@@ -326,7 +327,6 @@ dependencies = [
 [[package]]
 name = "tree-sitter-bison"
 version = "0.1.0"
-source = "git+https://github.com/lemonadern/tree-sitter-bison#30f8b4309605be7e907faf37fc4bf9f23491e15a"
 dependencies = [
  "cc",
  "tree-sitter-language",

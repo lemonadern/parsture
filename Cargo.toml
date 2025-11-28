@@ -7,6 +7,8 @@ edition = "2024"
 tree-sitter = "0.25.10"
 tree-sitter-bison = { git = "https://github.com/lemonadern/tree-sitter-bison" }
 clap = { version = "4.5.52", features = ["derive"] }
+regex = "1.11"
 
-# [patch."https://github.com/lemonadern/tree-sitter-bison"]
-# tree-sitter-bison = { path = "../tree-sitter-bison" }
+# For working on the local fork
+[patch."https://github.com/lemonadern/tree-sitter-bison"]
+tree-sitter-bison = { path = "../tree-sitter-bison" }
